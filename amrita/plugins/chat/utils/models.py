@@ -45,7 +45,8 @@ class BaseModel(B_Model):
     def __str__(self) -> str:
         return json.dumps(self.model_dump(), ensure_ascii=True)
 
-    def __repr__(self) -> self.__str__()
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def __getitem__(self, key: str) -> Any:
         return self.model_dump()[key]
@@ -362,7 +363,7 @@ async def get_or_create_data(
             session.add(memory)
             if not is_group:
                 return memory
-            
+
             # 然后获取GroupConfig表的锁（高级别锁）
             config_lock = database_lock_with_type(LockType.GROUP_CONFIG, ins_id)
             async with config_lock:
@@ -377,6 +378,6 @@ async def get_or_create_data(
                     group_config = (await session.execute(stmt)).scalar_one()
                 session.add(group_config)
                 return group_config, memory
-    
+
     # 使用死锁重试机制
     return await deadlock_retry_manager.execute_with_retry(_get_or_create_data)
