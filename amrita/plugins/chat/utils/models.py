@@ -26,7 +26,7 @@ from sqlalchemy import (
     text,
     update,
 )
-from sqlalchemy.exc import OperationalError, DeadlockDetectedError
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Mapped, mapped_column
 from typing_extensions import Self
 
@@ -380,4 +380,4 @@ async def get_or_create_data(
                 return group_config, memory
 
     # 使用死锁重试机制
-    return await deadlock_retry_manager.execute_with_retry(_get_or_create_data)
+    return await deadlock_retry_manager.execute_with_retry(_get_or_create_data)  # type: ignore[return-value]
