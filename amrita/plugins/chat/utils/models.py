@@ -26,7 +26,6 @@ from sqlalchemy import (
     text,
     update,
 )
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Mapped, mapped_column
 from typing_extensions import Self
 
@@ -363,7 +362,7 @@ async def get_or_create_data(
             session.add(memory)
             if not is_group:
                 return memory
-
+            
             # 然后获取GroupConfig表的锁（高级别锁）
             config_lock = database_lock_with_type(LockType.GROUP_CONFIG, ins_id)
             async with config_lock:
