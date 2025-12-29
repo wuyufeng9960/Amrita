@@ -88,20 +88,26 @@ class DeadlockRetryManager:
 
     async def execute_with_retry(self, operation, *args, **kwargs):
         """执行操作并处理死锁重试"""
-        for attempt in range(self.max_retries + 1):
+        def is_deadlock_error(error):
+            error_msg = str(error).lower()
+            return any(
+                keyword in error_msg
+                for keyword in ["deadlock", "lock wait timeout", "dead lock"]
+            )
+
+        attempt = 0
+        while attempt <= self.max_retries:
             try:
-                return await operation(*args, **kwargs)
-            except Exception as e:
-                error_msg = str(e).lower()
-                if any(
-                    keyword in error_msg
-                    for keyword in ["deadlock", "lock wait timeout", "dead lock"]
-                ):
-                    if attempt < self.max_retries:
-                        wait_time = self.backoff_factor * (2 ** attempt)
-                        await asyncio.sleep(wait_time)
-                        continue
-                raise
+                result = await operation(*args, **kwargs)
+                return result
+            except Exception as e:  # noqa: PERF203
+                if not is_deadlock_error(e):
+                    raise
+                if attempt >= self.max_retries:
+                    raise
+                wait_time = self.backoff_factor * (2 ** attempt)
+                await asyncio.sleep(wait_time)
+                attempt += 1
 
 
 # 全局重试管理器
